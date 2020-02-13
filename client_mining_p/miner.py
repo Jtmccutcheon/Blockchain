@@ -58,7 +58,7 @@ if __name__ == '__main__':
         # Handle non-json response
         try:
             data = r.json()
-            print(data)
+            print(data, 'last_block')
         except ValueError:
             print("Error:  Non-json response")
             print("Response returned:")
@@ -67,16 +67,18 @@ if __name__ == '__main__':
 
         # TODO: Get the block from `data` and use it to look for a new proof
         # new_proof = ???
-        new_proof = data
-        print(new_proof)
+        new_block = data['last_block']
+        new_proof = proof_of_work(new_block)
+        print(f"proof found:{new_proof}")
 
-        # # When found, POST it to the server {"proof": new_proof, "id": id}
-        # post_data = {"proof": new_proof, "id": id}
+        # When found, POST it to the server {"proof": new_proof, "id": id}
+        post_data = {"proof": new_proof, "id": id}
+        print(post_data)
 
-        # r = requests.post(url=node + "/mine", json=post_data)
-        # data = r.json()
+        r = requests.post(url=node + "/mine", json=post_data)
+        data = r.json()
 
-        # # TODO: If the server responds with a 'message' 'New Block Forged'
-        # # add 1 to the number of coins mined and print it.  Otherwise,
-        # # print the message from the server.
-        # pass
+        # TODO: If the server responds with a 'message' 'New Block Forged'
+        # add 1 to the number of coins mined and print it.  Otherwise,
+        # print the message from the server.
+        pass

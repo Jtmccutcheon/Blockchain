@@ -1,5 +1,3 @@
-# Paste your version of blockchain.py from the basic_block_gp
-# folder here
 from flask import Flask, jsonify, request
 import hashlib
 import json
@@ -25,6 +23,10 @@ class Blockchain(object):
         * List of current transactions
         * The proof used to mine this block
         * The hash of the previous block
+    ​
+        :param proof: <int> The proof given by the Proof of Work algorithm
+        :param previous_hash: (Optional) <str> Hash of previous Block
+        :return: <dict> New Block
         """
 
         block = {
@@ -49,13 +51,26 @@ class Blockchain(object):
         "return": <str>
         """
 
+        # Use json.dumps to convert json into a string
+        # Use hashlib.sha256 to create a hash
+        # It requires a `bytes-like` object, which is what
+        # .encode() does.
+        # It converts the Python string into a byte string.
+        # We must make sure that the Dictionary is Ordered,
+        # or we'll have inconsistent hashes
+        # TODO: Create the block_string
         string_object = json.dumps(block, sort_keys=True)
         block_string = string_object.encode()
 
         # TODO: Hash this string using sha256
         raw_hash = hashlib.sha256(block_string)
         hex_hash = raw_hash.hexdigest()
-
+        # By itself, the sha256 function returns the hash in a raw string
+        # that will likely include escaped characters.
+        # This can be hard to read, but .hexdigest() converts the
+        # hash to a string of hexadecimal characters, which is
+        # easier to work with and understand
+        # TODO: Return the hashed block string in hexadecimal format
         return hex_hash
 
     @property
@@ -93,7 +108,7 @@ class Blockchain(object):
         guess = f'{block_string}{proof}'.encode()
         guess_hash = hashlib.sha256(guess).hexdigest()
 
-        return guess_hash[:3] == "000"
+        return guess_hash[:6] == "000000"
 
 
 # Instantiate our Node
@@ -107,41 +122,20 @@ print(blockchain.chain)
 print(blockchain.hash(blockchain.last_block))
 
 
-@app.route('/mine', methods=['GET', 'POST'])
+@app.route('/mine', methods=['GET'])
 def mine():
-    data = request.get_json()
-    # breakpoint()
     # Run the proof of work algorithm to get the next proof
-    # proof = blockchain.proof_of_work(blockchain.last_block)
+    proof = blockchain.proof_of_work(blockchain.last_block)
 
-    proof = data['proof']
+    # Forge the new Block by adding it to the chain with the proof
+    previous_hash = blockchain.hash(blockchain.last_block)
+    new_block = blockchain.new_block(proof, previous_hash)
 
-    last_block = blockchain.last_block
-    last_block_string = json.dumps(last_block, sort_keys=True)
-
-    if blockchain.valid_proof(last_block_string, proof):
-
-        # Forge the new Block by adding it to the chain with the proof
-        previous_hash = blockchain.hash(blockchain.last_block)
-        new_block = blockchain.new_block(proof, previous_hash)
-
-        if request.method == 'GET':
-            response = {
-                # TODO: Send a JSON response with the new block
-                "block": new_block
-            }
-            return jsonify(response), 200
-
-        if request.method == 'POST':
-            response = {
-                "block": new_block,
-            }
-            return jsonify(response), 400
-    else:
-        response = {
-            "message": "bad proof"
-        }
-        return jsonify(response), 200
+    response = {
+        # TODO: Send a JSON response with the new block
+        "block": new_block
+    }
+    return jsonify(response), 200
 
 
 @app.route('/chain', methods=['GET'])
@@ -150,14 +144,6 @@ def full_chain():
         # TODO: Return the chain and its current length
         'chain': blockchain.chain,
         'length': len(blockchain.chain),
-    }
-    return jsonify(response), 200
-
-
-@app.route('/last_block', methods=['GET'])
-def last_block():
-    response = {
-        'last_block': blockchain.last_block
     }
     return jsonify(response), 200
 

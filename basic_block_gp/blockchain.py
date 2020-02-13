@@ -32,6 +32,7 @@ class Blockchain(object):
 
         block = {
             # TODO
+
         }
 
         # Reset the current list of transactions
@@ -119,6 +120,7 @@ def mine():
 
     response = {
         # TODO: Send a JSON response with the new block
+        "message": "hello world!"
     }
 
     return jsonify(response), 200
